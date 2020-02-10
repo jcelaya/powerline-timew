@@ -1,6 +1,7 @@
 # vim:fileencoding=utf-8:noet
 
 from subprocess import run
+from time import sleep
 from powerline_timew.segments import timew
 
 
@@ -33,6 +34,28 @@ class TimewTest:
         assert len(timew.summary(task)) == 8
         self.delete_task(task)
 
+    def test_time_today(self):
+        task = 'foo'
+
+        self.delete_task(task)
+        time_today, running = timew.time_today(task)
+        assert time_today is None
+        assert not running
+        run(['timew', 'start', task])
+        time_today, running = timew.time_today(task)
+        assert time_today is not None
+        assert running
+        run(['timew', 'stop'])
+        time_today, running = timew.time_today(task)
+        assert time_today is not None
+        assert not running
+        sleep(1)
+        run(['timew', 'continue'])
+        time_today, running = timew.time_today(task)
+        assert time_today is not None
+        assert running
+        self.delete_task(task)
+
     def test_call(self):
         task = 'foo'
 
@@ -46,8 +69,9 @@ class TimewTest:
         assert 'contents' in segment
         assert 'highlight_groups' in segment
         assert len(segment['highlight_groups']) == 2
-        assert segment['highlight_groups'][0] == 'timew_unexpired'
+        assert segment['highlight_groups'][0] == 'timew_running'
         assert segment['highlight_groups'][1] == 'timew'
+
         segments = timew(None, task=task, limit='0:00:00')
         print(segments)
         assert len(segments) == 1
@@ -58,9 +82,22 @@ class TimewTest:
         assert segment['highlight_groups'][0] == 'timew_expired'
         assert segment['highlight_groups'][1] == 'timew'
 
+        run(['timew', 'stop'])
+        segments = timew(None, task=task, limit='8:00:00')
+        print(segments)
+        assert len(segments) == 1
+        segment = segments[0]
+        assert 'contents' in segment
+        assert 'highlight_groups' in segment
+        assert len(segment['highlight_groups']) == 2
+        assert segment['highlight_groups'][0] == 'timew_paused'
+        assert segment['highlight_groups'][1] == 'timew'
+        self.delete_task(task)
+
 
 if __name__ == "__main__":
     t = TimewTest()
     t.test_limit_expired()
     t.test_summary()
+    t.test_time_today()
     t.test_call()
