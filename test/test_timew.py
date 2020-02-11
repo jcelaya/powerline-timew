@@ -5,7 +5,7 @@ from time import sleep
 from powerline_timew.segments import timew
 
 
-class TimewTest:
+class TestTimew:
     def delete_task(self, task):
         summary = timew.summary(task)
         while len(summary) > 1:
@@ -93,11 +93,3 @@ class TimewTest:
         assert segment['highlight_groups'][0] == 'timew_paused'
         assert segment['highlight_groups'][1] == 'timew'
         self.delete_task(task)
-
-
-if __name__ == "__main__":
-    t = TimewTest()
-    t.test_limit_expired()
-    t.test_summary()
-    t.test_time_today()
-    t.test_call()
